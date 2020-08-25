@@ -1,13 +1,13 @@
 #include "ucloud_iot_sdk_esp32.h"
 #include <WiFi.h>
 /******用户实现************/
-#define wifi_ssid     "LJZ"
-#define wifi_password "12345678"
+#define wifi_ssid     ""
+#define wifi_password ""
 
-#define product_sn        "o2lp4qngf6ytdq1n"
-#define device_sn         "hhg4fq0iiw23lwp7"
-#define product_secret    NULL//"i1jybkmxm1ez9l4y"
-#define device_secret     "da5qd9isg6j8eany"
+#define product_sn        ""
+#define device_sn         ""
+#define product_secret    ""
+#define device_secret     ""
 /*************************/
 
 #define MQTT_TEST_TOPIC  "/%s/%s/test/mqtt_connect"  

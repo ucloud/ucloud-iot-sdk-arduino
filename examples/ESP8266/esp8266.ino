@@ -1,16 +1,17 @@
 #include "ucloud_iot_sdk_esp8266.h"
 #include "ESP8266WiFi.h"
 /******用户实现************/
-#define wifi_ssid     "LJZ"
-#define wifi_password "12345678"
+#define wifi_ssid     ""
+#define wifi_password ""
 
-#define product_sn        "o2lp4qngf6ytdq1n"
-#define device_sn         "4dg7a36jyla1qz1j"
-#define product_secret    NULL//"i1jybkmxm1ez9l4y" 
-#define device_secret     "s2zrz9eaaj5ibpho"
+#define product_sn        ""
+#define device_sn         ""
+#define product_secret    ""
+#define device_secret     ""
 /*************************/
 
-#define MQTT_TEST_TOPIC  "/%s/%s/test/mqtt_connect"  
+#define MQTT_TEST_TOPIC  "/%s/%s/test/mqtt_connect" 
+#define MQTT_TEST_MESSAGE  "This is a test message!"  
 char mqtt_test_topic[80];
 
 /*******用户消息回调函数************/
@@ -66,7 +67,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   ucloudMQTT.mqttYield(2000);
-  if(ucloudMQTT.publish(mqtt_test_topic,"123456789")==false)
+  if(ucloudMQTT.publish(mqtt_test_topic,MQTT_TEST_MESSAGE)==false)
     Serial.println("publish topic failed !");
   else
     Serial.println("publish topic success !");
