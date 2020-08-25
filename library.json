@@ -1,0 +1,21 @@
+{
+    "name": "UCloudIoTSDK",
+    "keywords": "ethernet, ucloud, mqtt, m2m, iot",
+    "description": "UCloudIoTSDK  is  designed & developed by UCloud IoT team , this library is used to connect with UCloud iot platform.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ucloud/ucloud-iot-sdk-arduino"
+    },
+    "version": "0.0.1",
+    "examples": "examples/*/*.ino",
+    "frameworks": "arduino",
+    "platforms": ["espressif8266", "espressif32"],
+    "dependencies": [
+        {
+            "name": "PubSubClient",
+        },
+        {
+            "name": "Arduino_JSON"
+        }
+    ]
+}

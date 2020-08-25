@@ -1,0 +1,17 @@
+# Syntax Coloring Map For UCloud IoT Platform
+
+# Datatypes (KEYWORD1)
+
+UCloudIoTSDK  KEYWORD1
+
+
+# Methods and Functions (KEYWORD2)
+
+mqtt_connect   KEYWORD2
+mqttYield         KEYWORD2
+mqtt_status      KEYWORD2
+publish             KEYWORD2
+subscribe          KEYWORD2
+
+# Constants (LITERAL1)
+
