@@ -14,7 +14,6 @@
 #define MQTT_TEST_MESSAGE  "This is a test message!"  
 char mqtt_test_topic[80];
 
-
 /*******用户消息回调函数************/
 void  msg_callback(char* topic, uint8_t* payload, unsigned int length)
 {
@@ -28,10 +27,8 @@ void  msg_callback(char* topic, uint8_t* payload, unsigned int length)
   Serial.println();
 }
 
-
 int wifi_connect(char *ssid,char *password)
 {
-  
   Serial.print("attempting to connect ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
@@ -45,9 +42,7 @@ int wifi_connect(char *ssid,char *password)
   Serial.println(ssid);
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  
 }
-
 UCloudMQTT ucloudMQTT(product_sn,device_sn,product_secret,device_secret,msg_callback);
 
 void setup() {
