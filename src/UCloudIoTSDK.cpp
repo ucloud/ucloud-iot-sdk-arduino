@@ -45,16 +45,14 @@ const char* mqtt_ca_crt= \
     "I8m1P/ceVO0RjNNBG0pDH9PH4OA7ikY81c63PBCQaYMKaiksCzs=\n"
     "-----END CERTIFICATE-----\n"
 };
-	
-WiFiClient       espClient;
 
 #ifdef ENABLE_ESP32_TLS
 WiFiClientSecure espSecureClient;
-#endif
-
-#ifdef ENABLE_ESP8266_TLS
+#elif defined ENABLE_ESP8266_TLS
 BearSSL::WiFiClientSecure espSecureClient;
 BearSSL::X509List mqttcert(mqtt_ca_crt);
+#else
+WiFiClient    espClient;
 #endif
 
 
@@ -125,15 +123,6 @@ UCloudMQTT::UCloudMQTT(char      *product_sn,char *device_sn,char *product_secre
 	{
 		uiot_info_st.user_callback=callback;
 	}
-	uiot_info_st.is_tls=NO_TLS;
-	
-	#ifdef ENABLE_ESP32_TLS
-		uiot_info_st.is_tls=ESP32_TLS;
-	#endif
-	
-	#ifdef ENABLE_ESP8266_TLS
-		uiot_info_st.is_tls=ESP8266_TLS;
-	#endif
 	memcpy(uiot_info_st.productSn,product_sn,20);
 	memcpy(uiot_info_st.deviceSn,device_sn,20);
 }
@@ -144,15 +133,13 @@ int UCloudMQTT::mqtt_connect(void)
 	int retry_time=10;
 	while (!client.connected()&&retry_time) 
 	{
-		if(uiot_info_st.is_tls==ESP32_TLS)
-		{
+	
+		#ifdef ENABLE_ESP32_TLS
 		 	espSecureClient.setCACert(mqtt_ca_crt);
 			client.setClient(espSecureClient);
 			client.setServer(mqtt_server, 8883);
 			Serial.println("support TLS connection!");
-		}
-		else if(uiot_info_st.is_tls==ESP8266_TLS)
-		{
+		#elif defined ENABLE_ESP8266_TLS
 			espSecureClient.setTrustAnchors(&mqttcert);
 			setClock();
 			// if no check the CA Certification
@@ -160,12 +147,11 @@ int UCloudMQTT::mqtt_connect(void)
 			client.setClient(espSecureClient);
 			client.setServer(mqtt_server, 8883);
 			Serial.println("support TLS connection!");
-		}
-		else
-		{
-			client.setClient(espClient);
-			client.setServer(mqtt_server, 1883);
-		}
+		#else
+		client.setClient(espClient);
+		client.setServer(mqtt_server, 1883);
+		#endif
+		
 		client.setKeepAlive(500);
 	    Serial.print("MQTT connecting ...");
 	    /* connect now */
@@ -317,6 +303,7 @@ boolean  UCloudMQTT::unsubscribe(const char* topic)
 }
 
 #ifdef ENABLE_ESP8266_TLS
+//esp8266使用加密时同步网络时间
 void UCloudMQTT::setClock()
 {
   configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");

@@ -28,23 +28,13 @@
 #ifdef ENABLE_ESP32_TLS
 #include <WiFiClientSecure.h>
 #include <ssl_client.h>
-#endif
-
-#ifdef ENABLE_ESP8266_TLS
+#elif defined ENABLE_ESP8266_TLS
 #include <WiFiClientSecure.h>
 #include <time.h>
 #endif
 
-
-
-
-
 #define DYNAMIC_AUTH 1
 #define STATIC_AUTH  0
-
-#define ESP8266_TLS  2
-#define ESP32_TLS    1
-#define NO_TLS       0
 
 #define FAILED_RET   1
 #define SUCCESS_RET  0
@@ -57,7 +47,6 @@ typedef struct {
 	char productSecret[20];
 	char deviceSecret[20];
 	int  auth_mode;
-	int  is_tls;
 	MQTTHandlerFun  user_callback;
 }Uiot_Info_st;
 
