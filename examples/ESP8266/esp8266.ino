@@ -1,4 +1,4 @@
-#include "ucloud_iot_sdk_esp8266.h"
+#include "UCloudIoTSDK.h"
 #include "ESP8266WiFi.h"
 /******用户实现************/
 #define wifi_ssid     ""

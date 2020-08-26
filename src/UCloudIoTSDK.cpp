@@ -13,8 +13,7 @@
 * permissions and limitations under the License.
 */
 
-#include "ucloud_iot_sdk_esp8266.h"
-
+#include "UCloudIoTSDK.h"
 
 #define PASSWRD_TOPIC           "/$system/%s/%s/password"
 #define PASSWORD_REPLY_TOPIC    "/$system/%s/%s/password_reply"
@@ -46,10 +45,18 @@ const char* mqtt_ca_crt= \
     "I8m1P/ceVO0RjNNBG0pDH9PH4OA7ikY81c63PBCQaYMKaiksCzs=\n"
     "-----END CERTIFICATE-----\n"
 };
-
+	
 WiFiClient       espClient;
+
+#ifdef ENABLE_ESP32_TLS
+WiFiClientSecure espSecureClient;
+#endif
+
+#ifdef ENABLE_ESP8266_TLS
 BearSSL::WiFiClientSecure espSecureClient;
 BearSSL::X509List mqttcert(mqtt_ca_crt);
+#endif
+
 
 static PubSubClient client;
 static const char*  mqtt_server = "mqtt-cn-sh2.iot.ucloud.cn";
@@ -57,6 +64,7 @@ char password_string[30] = "{\"RequestID\":\"1\"}";
 char passwrd_topic[100];
 char passwrd_reply_topic[100];
 Uiot_Info_st uiot_info_st;
+
 
 	
 //消息回调函数，收到数据之后对数据进行处理
@@ -87,8 +95,9 @@ void  dynamic_msg_callback(char* topic, uint8_t* payload, unsigned int length)
   }
 }
 
+
 //构造函数，内部对传入的四元组进行检查以及初始化四元组,传入用户回调函数
-UCloudMQTT::UCloudMQTT(char    *product_sn,char *device_sn,char *product_secret,char *device_secret,MQTTHandlerFun callback)
+UCloudMQTT::UCloudMQTT(char      *product_sn,char *device_sn,char *product_secret,char *device_secret,MQTTHandlerFun callback)
 {
 	if(product_sn==NULL||device_sn==NULL)
 		Serial.println("MQTT CONSTRUCT FAILED!");
@@ -116,10 +125,14 @@ UCloudMQTT::UCloudMQTT(char    *product_sn,char *device_sn,char *product_secret,
 	{
 		uiot_info_st.user_callback=callback;
 	}
-	#ifdef ENABLE_TLS
-		uiot_info_st.is_tls=IS_TLS;
-	#else
-		uiot_info_st.is_tls=NO_TLS;
+	uiot_info_st.is_tls=NO_TLS;
+	
+	#ifdef ENABLE_ESP32_TLS
+		uiot_info_st.is_tls=ESP32_TLS;
+	#endif
+	
+	#ifdef ENABLE_ESP8266_TLS
+		uiot_info_st.is_tls=ESP8266_TLS;
 	#endif
 	memcpy(uiot_info_st.productSn,product_sn,20);
 	memcpy(uiot_info_st.deviceSn,device_sn,20);
@@ -131,9 +144,15 @@ int UCloudMQTT::mqtt_connect(void)
 	int retry_time=10;
 	while (!client.connected()&&retry_time) 
 	{
-		if(uiot_info_st.is_tls==IS_TLS)
+		if(uiot_info_st.is_tls==ESP32_TLS)
 		{
-			
+		 	espSecureClient.setCACert(mqtt_ca_crt);
+			client.setClient(espSecureClient);
+			client.setServer(mqtt_server, 8883);
+			Serial.println("support TLS connection!");
+		}
+		else if(uiot_info_st.is_tls==ESP8266_TLS)
+		{
 			espSecureClient.setTrustAnchors(&mqttcert);
 			setClock();
 			// if no check the CA Certification
@@ -150,7 +169,7 @@ int UCloudMQTT::mqtt_connect(void)
 		client.setKeepAlive(500);
 	    Serial.print("MQTT connecting ...");
 	    /* connect now */
-	     if(uiot_info_st.auth_mode == DYNAMIC_AUTH)
+	    if(uiot_info_st.auth_mode == DYNAMIC_AUTH)
 	    {
 		    client.setCallback(dynamic_msg_callback);
 	        gen_mqtt_connect_info(DYNAMIC_AUTH);
@@ -241,24 +260,6 @@ void UCloudMQTT::gen_mqtt_connect_info(int auth_mode)
 		this->passWord = uiot_info_st.deviceSecret;
 	}
 }
-// Set time via NTP, as required for x.509 validation
-void UCloudMQTT::setClock()
-{
-  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.print("Waiting for NTP time sync: ");
-  time_t now = time(nullptr);
-  while (now < 8 * 3600 * 2)
-  {
-    delay(500);
-    Serial.print(".");
-    now = time(nullptr);
-  }
-  Serial.println("");
-  struct tm timeinfo;
-  gmtime_r(&now, &timeinfo);
-  Serial.print("Current time: ");
-  Serial.print(asctime(&timeinfo));
-}
 
 //返回mqtt连接的状态
 boolean UCloudMQTT::mqtt_status()
@@ -286,11 +287,54 @@ boolean  UCloudMQTT::publish(const char* topic, const char* payload)
 	return client.publish(topic,payload);
 }
 
+//带数据长度的发布
+boolean  UCloudMQTT::publish(const char* topic, const uint8_t * payload, unsigned int plength)
+{
+	return client.publish(topic,payload,plength);
+}
+
 //订阅消息
 boolean  UCloudMQTT::subscribe(const char* topic)
 {
 	return client.subscribe(topic,0);
 }
+
+//支持qos为0或1的订阅
+boolean  UCloudMQTT::subscribe(const char* topic, uint8_t qos)
+{
+	if(qos>1)
+	{
+		Serial.println("only support for (qos = 0) or (qos = 1)");
+		return false;
+	}
+	return client.subscribe(topic,qos);
+}
+
+//取消订阅
+boolean  UCloudMQTT::unsubscribe(const char* topic)
+{
+	return client.unsubscribe(topic);
+}
+
+#ifdef ENABLE_ESP8266_TLS
+void UCloudMQTT::setClock()
+{
+  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.print("Waiting for NTP time sync: ");
+  time_t now = time(nullptr);
+  while (now < 8 * 3600 * 2)
+  {
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+  Serial.println("");
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  Serial.print("Current time: ");
+  Serial.print(asctime(&timeinfo));
+}
+#endif
 
 //析构函数
 UCloudMQTT::~UCloudMQTT(void)

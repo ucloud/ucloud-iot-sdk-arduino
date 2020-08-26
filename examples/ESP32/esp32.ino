@@ -1,4 +1,4 @@
-#include "ucloud_iot_sdk_esp32.h"
+#include "UCloudIoTSDK.h"
 #include <WiFi.h>
 /******用户实现************/
 #define wifi_ssid     ""
